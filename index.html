@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Toy Three.js Game</title>
+		<style>
+			body { 
+				margin: 0;
+				color: white;
+			}
+			header {
+				position: absolute;
+				top: 1em;
+			}
+			#centerText {
+				position:absolute;
+				font-size: 200%;
+				top: 50%;
+				width: 100%;
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<header>WASD or arrow key to move. Collect all the yellow cubes to win.</header>
+		<div id="centerText"></div>
+	<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+	<script type="importmap">
+	  {
+		"imports": {
+		  "three": "https://unpkg.com/three@0.141.0/build/three.module.js"
+		}
+	  }
+	</script>
+
+	<script type="module">
+
+	import * as THREE from 'three';
+
+	const scene = new THREE.Scene();
+	const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 1000 );
+
+	const renderer = new THREE.WebGLRenderer();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( renderer.domElement );
+
+	const coin_radius = 1;
+	//we draw the coin as a box with edge length of 1
+	//even if for collision, we treat it as a sphere of diamater 2
+	const coin_geometry = new THREE.BoxGeometry( coin_radius, coin_radius, coin_radius );
+	const coin_material = new THREE.MeshPhongMaterial( { color: 0xeeee11 } ); //yellow
+
+	const play_field = 20;
+	const coin_count = 10;
+	let coins = [];
+	for (let i = 0; i < coin_count; i++) {
+		const coin = new THREE.Mesh( coin_geometry, coin_material );
+		coins.push(coin);
+		scene.add( coin );
+
+		coin.rotation.y = i;
+		coin.rotation.x = 0.5;
+		//randomly distribute onto the playfield
+		coin.position.set(Math.random() * play_field - play_field/2, 0, -Math.random()*play_field);
+	}
+
+	const stage_geometry = new THREE.BoxGeometry( play_field, 1, play_field);
+	const stage_material = new THREE.MeshPhongMaterial( { color: 0x00ee00 } ); //green
+	const stage = new THREE.Mesh( stage_geometry, stage_material );
+	stage.position.set(0, -1, -play_field/2);
+	scene.add(stage);
+
+
+	const directional_light = new THREE.DirectionalLight( 0xffaaaa, 0.5 );
+	directional_light.position.set(-0.5, 1, 0.1);
+	scene.add( directional_light );
+
+	const ambient_light = new THREE.AmbientLight( 0x404080 ); 
+	scene.add( ambient_light );
+
+	camera.position.z = 5;
+
+	//set up controls
+	let keymap = {};
+	document.body.onkeydown = function(e) {
+		//use code so that WASD controls work on other keyboard layouts
+		keymap[e.code] = true;
+	}
+	document.body.onkeyup = function(e) {
+		delete keymap[e.code];
+	}
+
+
+	const player_speed = 0.1;
+	const player_turn_speed = 0.05;
+	
+	//main loop
+	function each_frame() {
+		
+		//player controls
+		if (keymap['KeyS'] || keymap['ArrowDown']) {
+			camera.position.z += Math.cos(camera.rotation.y) * player_speed;
+			camera.position.x += Math.sin(camera.rotation.y) * player_speed;
+		}
+		if (keymap['KeyW'] || keymap['ArrowUp']) {
+			camera.position.z -= Math.cos(camera.rotation.y) * player_speed;
+			camera.position.x -= Math.sin(camera.rotation.y) * player_speed;
+		}
+		if (keymap['KeyD'] || keymap['ArrowRight']) {
+			camera.rotation.y -= player_turn_speed;
+		}
+		if (keymap['KeyA'] || keymap['ArrowLeft']) {
+			camera.rotation.y += player_turn_speed;
+		}
+
+		//handle coins
+		const new_coins = []; //copy coins
+		for (let i = 0; i < coins.length; i++) {
+			const coin = coins[i];
+			coin.rotation.y += 0.01;
+			if (coin.position.distanceTo(camera.position) < coin_radius) {
+				scene.remove(coin)
+			} else {
+				//only copy the coin into the new coins
+				//if it hasn't been collected
+				new_coins.push(coin)
+			}
+		}
+		coins = new_coins;
+
+		if (coins.length == 0) {
+			document.getElementById('centerText').textContent = "You Win!"
+		}
+
+		//render
+		renderer.render( scene, camera );
+
+		requestAnimationFrame( each_frame );
+	}
+	each_frame();
+	</script>
+	</body>
+</html>
