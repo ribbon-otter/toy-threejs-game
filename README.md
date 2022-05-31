@@ -1,5 +1,5 @@
 # toy-threejs-game
-A toy game I made to learn the basics of three.js. Play it [here](https://rawcdn.githack.com/ribbon-otter/toy-threejs-game/82679064849376020711b0987b0fb3af2f2094fb/index.html)
+A toy game I made to learn the basics of three.js. Play it [here](https://rawcdn.githack.com/ribbon-otter/toy-threejs-game/33756049363f3b92df73d951e2ac19ed73d955bf/index.html)
 
 # Licence
 MIT License
