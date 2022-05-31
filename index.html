@@ -45,6 +45,7 @@
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	document.body.appendChild( renderer.domElement );
 
+	//coins
 	const coin_radius = 1;
 	//we draw the coin as a box with edge length of 1
 	//even if for collision, we treat it as a sphere of diamater 2
@@ -65,12 +66,24 @@
 		coin.position.set(Math.random() * play_field - play_field/2, 0, -Math.random()*play_field);
 	}
 
+	//play field
 	const stage_geometry = new THREE.BoxGeometry( play_field, 1, play_field);
-	const stage_material = new THREE.MeshPhongMaterial( { color: 0x00ee00 } ); //green
+	const stage_texture = new THREE.TextureLoader().load( './blue.png' );
+	const stage_material = new THREE.MeshPhongMaterial( { map: stage_texture } );
 	const stage = new THREE.Mesh( stage_geometry, stage_material );
 	stage.position.set(0, -1, -play_field/2);
 	scene.add(stage);
 
+	//enemy
+	const enemy_radius = 0.5;
+	const enemy_speed = 0.05;
+
+	const enemy_texture = new THREE.TextureLoader().load( './red.png' );
+	const enemy_material = new THREE.SpriteMaterial({map: enemy_texture});
+	const enemy = new THREE.Sprite( enemy_material);
+	enemy.position.set(1.0, 0, -play_field);
+
+	scene.add(enemy);
 
 	const directional_light = new THREE.DirectionalLight( 0xffaaaa, 0.5 );
 	directional_light.position.set(-0.5, 1, 0.1);
@@ -97,7 +110,8 @@
 	
 	//main loop
 	function each_frame() {
-		
+		let finished = false;
+
 		//player controls
 		if (keymap['KeyS'] || keymap['ArrowDown']) {
 			camera.position.z += Math.cos(camera.rotation.y) * player_speed;
@@ -131,12 +145,26 @@
 
 		if (coins.length == 0) {
 			document.getElementById('centerText').textContent = "You Win!"
+			finished = true;
+		}
+
+		//handle enemy
+		if (!isNaN(enemy.position.x))	console.log(enemy.position);
+		const enemy_move_direction = camera.position.clone();
+		enemy_move_direction.sub(enemy.position) .normalize().multiplyScalar(enemy_speed);
+		enemy.position.add(enemy_move_direction);
+
+		if (enemy.position.distanceTo(camera.position) < enemy_radius) {
+			document.getElementById('centerText').textContent = "The Enemy got you. Refresh to replay"
+			finished = true;
 		}
 
 		//render
 		renderer.render( scene, camera );
 
-		requestAnimationFrame( each_frame );
+		if (!finished) {
+			requestAnimationFrame( each_frame );
+		}
 	}
 	each_frame();
 	</script>
